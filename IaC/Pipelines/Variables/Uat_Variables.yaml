@@ -1,6 +1,0 @@
-# Dev Variables
-variables:
-- name: Environment
-  value: 'uat'
-- name:  AppServiceName
-  value: '$(Environment)$(AppName)$(Owner)site'
