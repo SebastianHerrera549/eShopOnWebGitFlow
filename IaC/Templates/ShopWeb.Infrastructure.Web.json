@@ -1,0 +1,87 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "AppName": {
+            "metadata": {
+                "description": "The name of the Application. This drives the naming of the resources"
+            },
+            "type": "string"
+        },
+        "Environment": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the Environment (e.g. dev, qa, etc.) This drives the naming of the resources. It does not have to match the lifecycle"
+            }
+        },
+        "Owner": {
+            "type": "string",
+            "metadata": {
+                "description": "The nickname for the owner (by default = jroblesu)"
+            }
+        },        
+        "ASPName": {
+            "type": "string",
+            "metadata": {
+                "description": "The App Service Plan to use.  Must already exist"
+            }
+        }
+    },
+    "variables": {
+        "EnvironmentRootName": "[toLower(concat(parameters('Environment'),parameters('AppName'),parameters('Owner')))]",
+        "Location": "[resourcegroup().location]",
+        "SiteName": "[toLower(concat(variables('EnvironmentRootName'),'site'))]"
+    },
+    "resources": [
+        {
+            "name": "[variables('SiteName')]",
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-11-01",
+            "kind": "app,linux",
+            "location": "[variables('Location')]",
+            "properties": {
+                "enabled": true,
+                "serverFarmId": "[resourceId(resourcegroup().name,'Microsoft.Web/serverfarms', parameters('ASPName'))]",
+                "reserved": false,
+                "httpsOnly": false,
+                "hostNameSslStates": [
+                    {
+                        "name": "[toLower(concat(variables('SiteName'), '.azurewebsites.net'))]",
+                        "sslState": "Disabled",
+                        "hostType": "Standard"
+                    },
+                    {
+                        "name": "[toLower(concat(variables('SiteName'), '.scm.azurewebsites.net'))]",
+                        "sslState": "Disabled",
+                        "hostType": "Repository"
+                    }
+                ],
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "WEBSITE_NODE_DEFAULT_VERSION",
+                            "value": "6.9.1"
+                        },
+                        {
+                            "name": "ASPNETCORE_ENVIRONMENT",
+                            "value": "Development"
+                        }
+                    ]
+                }
+            },
+            "identity": {
+                "type": "SystemAssigned"
+            }
+        }
+    ],
+    "outputs": {
+        "SiteName": {
+            "value": "[variables('SiteName')]",
+            "type": "string"
+        },
+        "SiteIdentity": {
+            "value": "[reference(resourceid('Microsoft.Web/sites',variables('SiteName')), '2018-11-01', 'Full').identity.principalId]",
+            "type": "string"
+        }
+    }
+}

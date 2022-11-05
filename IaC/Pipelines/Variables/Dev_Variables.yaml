@@ -1,0 +1,6 @@
+# Dev Variables
+variables:
+- name: Environment
+  value: 'dev'
+- name:  AppServiceName
+  value: '$(Environment)$(AppName)$(Owner)site'
